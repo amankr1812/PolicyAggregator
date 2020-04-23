@@ -1,10 +1,11 @@
 package com.aggregator.controller;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import javax.validation.Valid;
-
+import org.json.simple.JSONArray;
+import org.json.*;
 import org.hibernate.annotations.common.util.impl.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+
 import com.aggregator.entity.ProvidersList;
 import com.aggregator.service.ProvidersListService;
 
@@ -38,18 +40,58 @@ public class ProvidersListController {
 	
 	
 	@GetMapping("/providersList")
-	public  String getAllInsuranceProviders() {		
+	public  JSONArray getAllInsuranceProviders() {		
 		
 		HttpHeaders headers=new HttpHeaders();
         headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
         HttpEntity<String> entity=new HttpEntity<String>(headers);
-        
         restTemplate = new RestTemplate();
-       String url=providersListService.getAll().get(0).getProviderUrl();
+        String url;
+        JSONArray jsonArray1 = new JSONArray();
+        JSONArray jsonArray2 = new JSONArray();
+        
+        for (ProvidersList temp : providersListService.getAll()) {
+        	lo.info("----------URLS-------  "+temp.getProviderUrl());
+        	url=temp.getProviderUrl();
+        	jsonArray1=restTemplate.exchange(url,HttpMethod.GET,entity,JSONArray.class).getBody();
+
+        	try {
+        	    for (int i = 0; i < jsonArray1.size(); i++) {
+        	        Object jsonObject = jsonArray1.get(i);
+        	        jsonArray2.add(jsonObject);
+        	    }
+        	} catch (Exception e) {
+        	    e.printStackTrace();
+        	}
+        	
+        }
+        
+       lo.info("----------FINAL VALUE-------  "+jsonArray2);
        
-       String value= restTemplate.exchange(url,HttpMethod.GET,entity,String.class).getBody();
-       lo.info("----------FINAL VALUE-------  "+value);
-       return value;
+//       try {
+//    	     JSONArray jsonarray = new JSONArray(value);
+//    	     lo.info("-----------------  "+jsonarray);
+//    	     
+//    	     // CONVERTING TO LIST
+//    	     ArrayList<String> listdata = new ArrayList<String>();  
+//    	     if (jsonarray != null) { 
+//    	    	   for (int i=0;i<jsonarray.length();i++){ 
+//    	    	    listdata.add(jsonarray.getString(i));
+//    	    	   } 
+//    	    	} 
+//    	     lo.info("-------------LIST-------------------"+listdata);
+//    	     
+//    	     // CONVERTING TO SINGLE JSON OBJECTS
+//    	     for(int i=0; i < jsonarray.length(); i++) {
+//    	    	    JSONObject jsonobject = jsonarray.getJSONObject(i);
+//    	    	    lo.info("-----------------  "+jsonobject.getString("providerName"));
+//    	    	}
+//    	}catch (Exception err){
+//    		lo.info("--------ERROR---------  "+err);
+//    	}
+       
+       
+       return jsonArray2;
 				  
 	   
 	  }
