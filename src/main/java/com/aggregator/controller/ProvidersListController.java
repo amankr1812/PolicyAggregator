@@ -46,10 +46,12 @@ public class ProvidersListController {
         headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
         HttpEntity<String> entity=new HttpEntity<String>(headers);
         restTemplate = new RestTemplate();
+        
         String url;
         JSONArray jsonArray1 = new JSONArray();
         JSONArray jsonArray2 = new JSONArray();
         
+        // Converting to JSON Array
         for (ProvidersList temp : providersListService.getAll()) {
         	lo.info("----------URLS-------  "+temp.getProviderUrl());
         	url=temp.getProviderUrl();
@@ -66,7 +68,22 @@ public class ProvidersListController {
         	
         }
         
-       lo.info("----------FINAL VALUE-------  "+jsonArray2);
+     // Converting to List
+        List<Object> list=new ArrayList<>();
+        try {
+    	    for (int i = 0; i < jsonArray2.size(); i++) {
+    	        Object jsonObject = jsonArray2.get(i);
+    	       lo.info("---------------EACH JSON OBJECT----------------"+jsonObject);
+    	       list.add(jsonObject);
+    	       
+    	    }
+    	} catch (Exception e) {
+    	    e.printStackTrace();
+    	}
+        lo.info("---------------List----------------"+list); // IN LIST FORMAT
+        lo.info("---------------List At 0 Index----------------"+list.get(0).toString());
+        
+       lo.info("----------FINAL ARRAY VALUE-------  "+jsonArray2); // IN JSON ARRAY FORMAT
        
 //       try {
 //    	     JSONArray jsonarray = new JSONArray(value);
