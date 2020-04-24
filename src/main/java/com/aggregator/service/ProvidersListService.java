@@ -20,8 +20,9 @@ public class ProvidersListService {
 		return providersListRepository.findAll();
 	}
 	
-	public Optional<ProvidersList> getById(Integer id) {
-		return providersListRepository.findById(id);
+	public ProvidersList getById(Integer id) {
+		return providersListRepository.getOne(id);
+		//return providersListRepository.findById(id);
 	}
 	
 	public ProvidersList createProvider(ProvidersList providersList) {
