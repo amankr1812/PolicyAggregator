@@ -174,13 +174,10 @@ public class ProvidersListController {
 	public List<AggregatorPlan> transform(ArrayList<String> listdata, int id) {
 
 		List<AggregatorPlan> subList = new ArrayList<>();
-
 		for (String temp : listdata) {
-
 			AggregatorPlan obj = new AggregatorPlan();
 			obj = extractData(temp, id);
 			subList.add(obj);
-
 		}
 
 		return subList;
