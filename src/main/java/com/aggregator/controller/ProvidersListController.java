@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,6 +46,7 @@ public class ProvidersListController {
 		restTemplate = new RestTemplate();
 
 		String url;
+
 		JSONArray jsonArray1 = new JSONArray();
 		List<ProvidersList> list = getUrl();
 
@@ -56,7 +58,6 @@ public class ProvidersListController {
 
 			try {
 
-				JSONParser parser = new JSONParser();
 				String str = jsonArray1.toString();
 
 				ArrayList<String> arr = new ArrayList<>();
@@ -81,7 +82,6 @@ public class ProvidersListController {
 				String lastStr = str2.substring(index1 + 2, str2.length());
 				arr.add(lastStr);
 
-				JSONObject json = (JSONObject) parser.parse(arr.get(0));
 				List<AggregatorPlan> subList = transform(arr, temp.getId());
 				mainList.add(subList);
 
@@ -92,6 +92,86 @@ public class ProvidersListController {
 		}
 
 		return mainList;
+
+	}
+
+	// ************* GET BY PlAN TYPE FILTER *****************
+
+	@GetMapping("/providersList/filter/{filter}")
+	public List<List<AggregatorPlan>> getByFilter(@PathVariable(value = "filter") String filter) {
+
+		List<List<AggregatorPlan>> mainList = new ArrayList<List<AggregatorPlan>>();
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+		HttpEntity<String> entity = new HttpEntity<String>(headers);
+		restTemplate = new RestTemplate();
+
+		String url;
+		JSONArray jsonArray1 = new JSONArray();
+		List<ProvidersList> list = getUrl();
+
+		// Converting to JSON Array
+		for (ProvidersList temp : list) {
+
+			url = temp.getProviderUrl();
+			String filterUrl = url + "/filter/" + filter; // Assuming every provider has this format for its filter url. Otherwise, provider needs to store the correct url in the registration
+			jsonArray1 = restTemplate.exchange(filterUrl, HttpMethod.GET, entity, JSONArray.class).getBody();
+
+			if (!jsonArray1.isEmpty()) {
+				try {
+					String str = jsonArray1.toString();
+
+					ArrayList<String> arr = new ArrayList<>();
+					int pos1 = 0, pos2;
+					String str2 = str.substring(1, str.length() - 1);
+
+					int index1 = str2.lastIndexOf("},");
+
+					for (int i = 0; i < str2.length(); i++) {
+						if (i <= index1) {
+							char x = str2.charAt(i); // }
+							char y = str2.charAt(i + 1); // ,
+							if (x == '}' && (y == ',' || i + 1 == str2.length())) {
+								pos2 = i;
+								String sub1 = str2.substring(pos1, pos2 + 1);
+								pos1 = i + 2;
+								arr.add(sub1);
+							}
+						}
+					}
+
+					String lastStr = str2.substring(index1 + 2, str2.length());
+					arr.add(lastStr);
+					List<AggregatorPlan> subList = transform(arr, temp.getId());
+					mainList.add(subList);
+
+				} catch (Exception err) {
+					lo.info("--------ERROR---------  " + err);
+				}
+			}
+		}
+
+		return mainList;
+
+	}
+
+	public List<AggregatorPlan> transform(ArrayList<String> listdata, int id) {
+
+		List<AggregatorPlan> subList = new ArrayList<>();
+
+		for (String temp : listdata) {
+			AggregatorPlan obj = new AggregatorPlan();
+			if (temp.charAt(0) != '{') {
+				temp = '{' + temp;
+			} else if (temp.charAt(temp.length() - 1) != '}') {
+				temp = temp + '}';
+			}
+			obj = extractData(temp, id);
+			subList.add(obj);
+		}
+
+		return subList;
 
 	}
 
@@ -168,19 +248,6 @@ public class ProvidersListController {
 		}
 
 		return tempObj;
-
-	}
-
-	public List<AggregatorPlan> transform(ArrayList<String> listdata, int id) {
-
-		List<AggregatorPlan> subList = new ArrayList<>();
-		for (String temp : listdata) {
-			AggregatorPlan obj = new AggregatorPlan();
-			obj = extractData(temp, id);
-			subList.add(obj);
-		}
-
-		return subList;
 
 	}
 
